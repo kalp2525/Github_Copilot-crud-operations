@@ -6,7 +6,7 @@ require('dotenv').config()
 // import mongoose module
 const mongoose = require('mongoose');
 // import routers module
-const routers = require('./routers/crud');
+const routers = require('./routers/crudRouter.js');
 
 const app = express();
 
