@@ -12,6 +12,9 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 //mui typography for styling
 import Typography from "@mui/material/Typography";
+//useEffect is used to fetch data from api
+//useState is used to set data
+import { useEffect, useState } from "react";
 
 const Container = styled("div")(() => ({
   padding: "15px 12px",
@@ -24,6 +27,28 @@ const AddUser = () => {
   //useNavigate is used in place of useParams
   const navigate = useNavigate();
   
+  //add user form api call with post method using fetch api with async and await for response and handle error using try and catch block and set data using useState  
+  //set data using useState
+  const [data, setData] = useState([]);
+  const addUserForm = async (data) => {
+    try {
+      const response = await fetch("http://localhost:5000/crud/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      console.log(response);
+      const result = await response.json();
+      console.log(result);
+      setData(result);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
+  
   return (
     <Container>
       {/* //add user label using mui typography for styling and set label in center using align property */}
@@ -35,31 +60,26 @@ const AddUser = () => {
       <Formik
         initialValues={{
           name: "",
-          email: "",
-          phone: "",
+          description: "",
         }}
         //validation using yup
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Required"),
-          email: Yup.string().email("Invalid email").required("Required"),
-          phone: Yup.string().required("Required"),
+          // description: Yup.string().required("Required"),
         })}
-        //onsubmit function
+        //onsubmit function and reset form values and setSubmitting to false to enable submit button
         onSubmit={(values, { setSubmitting }) => {
-          //setSubmitting is used to disable submit button
-          setSubmitting(true);
           //set values for submit
           values = {
             name: values.name,
-            email: values.email,
-            phone: values.phone,
+            description: values.description,
           };
           //alert values
           alert(JSON.stringify(values, null, 2));
+          //call add user form api
+          addUserForm(values);
           //on submit navigate to home page
           navigate("/");
-          //setSubmitting is used to disable submit button
-          setSubmitting(false);
         }}
       >
         {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
@@ -93,50 +113,26 @@ const AddUser = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   //set name for input
-                  name="email"
+                  name="description"
                   //set label for input
-                  label="Email"
+                  label="Description"
                   //set value for input
-                  value={values.email}
+                  value={values.description}
                   //set onchange event
                   onChange={handleChange}
                   //set onblur event
                   onBlur={handleBlur}
                   //set error message
-                  error={touched.email && Boolean(errors.email)}
+                  // error={touched.description && Boolean(errors.description)}
                   //set helper text
-                  helperText={touched.email && errors.email}
-                  //set input type
-                  type="email"
-                  //set input placeholder
-                  placeholder="Enter email"
-                  //set input width
-                  fullWidth
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  //set name for input
-                  name="phone"
-                  //set label for input
-                  label="Phone"
-                  //set value for input
-                  value={values.phone}  
-                  //set onchange event
-                  onChange={handleChange}
-                  //set onblur event
-                  onBlur={handleBlur}
-                  //set error message
-                  error={touched.phone && Boolean(errors.phone)}
-                  //set helper text
-                  helperText={touched.phone && errors.phone}
+                  // helperText={touched.description && errors.description}
                   //set input type
                   type="text"
                   //set input placeholder
-                  placeholder="Enter phone"
+                  placeholder="Enter description"
                   //set input width
                   fullWidth
-                />  
+                />
               </Grid>
             </Grid>
             {/* //mui grid for styling and mui button for submit and set grid size for different screen sizes using xs, sm, md, lg, xl properties  */}
@@ -164,7 +160,7 @@ const AddUser = () => {
                   Submit
                 </Button>
               </Grid>
-              </Grid>
+            </Grid>
           </form>
         )}
       </Formik>

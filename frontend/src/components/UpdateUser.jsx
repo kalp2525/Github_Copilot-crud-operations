@@ -14,35 +14,63 @@ import * as Yup from "yup";
 import Typography from "@mui/material/Typography";
 //useLocation is used to get data from previous page
 import { useLocation } from "react-router-dom";
+//useEffect is used to fetch data from api
+//useState is used to set data
+import { useEffect, useState } from "react";
 
 const Container = styled("div")(() => ({
   padding: "15px 12px",
 }));
 
-const UpdateUser = () => {
+const UpdateUser = (props) => {
   //useNavigate is used to navigate to other pages
   //useNavigate is used in place of useHistory
   //useNavigate is used in place of useLocation
   //useNavigate is used in place of useParams
   const navigate = useNavigate();
-
+ 
   //set data in update user form when click on update user button of specific user in table using useLocation
   //useLocation is used to get data from previous page
-  
   const location = useLocation();
-  //set data in update user form using setValues function
-  //setValues function is imported from formik
-  //setValues function takes object as argument
-  //object contains data to set in form
-  //object contains key value pair
-  //key is the name of the field in form
-  //value is the value of the field in form
-  //setValues function is used in place of setFieldValue
-  // setValues({
-  //   name: location.state.name,
-  //   email: location.state.email,
-  //   phone: location.state.phone,
-  // });
+
+  //useeffect to get single user data from api using fetch api with async and await for response and handle error using try and catch block and set data using useState
+  //set data using useState
+  const [singleData, setSingleData] = useState([]);
+  useEffect(() => {
+  const getSingleUser = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/crud/${location.state.data._id}`);
+      // console.log(response);
+      const result = await response.json();
+      // console.log(result);
+      setSingleData(result);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  getSingleUser();
+  }, []);
+
+  //update user form api call with post method using fetch api with async and await for response and handle error using try and catch block and set data using useState
+  //set data using useState
+  const [data, setData] = useState([]);
+  const updateUserForm = async (data, id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/crud/update/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      // console.log(response);
+      const result = await response.json();
+      // console.log(result);
+      setData(result);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <Container>
@@ -53,29 +81,30 @@ const UpdateUser = () => {
 
       {/* //update user form using formik and yup for validation and material ui for styling and mui textfield for input */}
       <Formik
-        initialValues={{
-          name: "",
-          email: "",
-          phone: "",
+        //reinitialize form values when props changes
+        enableReinitialize={true}
+        // set initial values using useLocation
+        // useLocation is used to get data from previous page
+        initialValues={{ 
+          name: singleData.data ? singleData.data.name : null,
+          description: singleData.data ? singleData.data.description : null, 
         }}
         //validation using yup
         validationSchema={Yup.object().shape({
           name: Yup.string().required("Required"),
-          email: Yup.string().email("Invalid email").required("Required"),
-          phone: Yup.string().required("Required"),
+          // description: Yup.string().required("Required"),
         })}
         //onsubmit function
         onSubmit={(values, { setSubmitting }) => {
-          //setSubmitting is used to disable submit button
-          setSubmitting(true);
           //set values for submit
           values = {
             name: values.name,
-            email: values.email,
-            phone: values.phone,
+            description: values.description,
           };
           //alert values
           alert(JSON.stringify(values, null, 2));
+          //call update user form api
+          updateUserForm(values, location.state.data._id);
           //on submit navigate to home page
           navigate("/");
         }}
@@ -98,6 +127,8 @@ const UpdateUser = () => {
                   onBlur={handleBlur}
                   //set fullWidth for input
                   fullWidth
+                  //textfield inputlabelprops shrink
+                  InputLabelProps={{ shrink: true }}
                   //set error for input
                   error={touched.name && Boolean(errors.name)}
                   //set helper text for input
@@ -106,42 +137,24 @@ const UpdateUser = () => {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  //set label for input   
-                  label="Email"
+                  //set label for input
+                  label="Description"
                   //set name for input
-                  name="email"
+                  name="description"
                   //set value for input
-                  value={values.email}
+                  value={values.description}
                   //set onchange event
                   onChange={handleChange}
                   //set onblur event
                   onBlur={handleBlur}
                   //set fullWidth for input
                   fullWidth
+                  //textfield inputlabelprops shrink
+                  InputLabelProps={{ shrink: true }}
                   //set error for input
-                  error={touched.email && Boolean(errors.email)}
+                  // error={touched.description && Boolean(errors.description)}
                   //set helper text for input
-                  helperText={touched.email && errors.email}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  //set label for input
-                  label="Phone"
-                  //set name for input
-                  name="phone"
-                  //set value for input
-                  value={values.phone}
-                  //set onchange event
-                  onChange={handleChange} 
-                  //set onblur event
-                  onBlur={handleBlur}
-                  //set fullWidth for input
-                  fullWidth
-                  //set error for input
-                  error={touched.phone && Boolean(errors.phone)}
-                  //set helper text for input
-                  helperText={touched.phone && errors.phone}
+                  // helperText={touched.description && errors.description}
                 />
               </Grid>
             </Grid>
@@ -163,8 +176,7 @@ const UpdateUser = () => {
                   style={{ height: "56px" }}
                   //set onclick event
                   onClick={() => {
-                    //on click navigate to home page
-                    navigate("/");
+                    isSubmitting= true;
                   }}
                 >
                   Submit

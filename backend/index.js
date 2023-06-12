@@ -7,8 +7,10 @@ require('dotenv').config()
 const mongoose = require('mongoose');
 // import routers module
 const routers = require('./routers/crudRouter.js');
+const cors = require("cors");
 
 const app = express();
+app.use(cors());
 
 // connect to mongodb
 mongoose.connect(process.env.MONGO, { useNewUrlParser: true, useUnifiedTopology: true })
