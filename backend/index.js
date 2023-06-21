@@ -6,11 +6,24 @@ require('dotenv').config()
 // import mongoose module
 const mongoose = require('mongoose');
 // import routers module
-const routers = require('./routers/crudRouter.js');
+const routers = require('./routers/grievancesRouter.js');
 const cors = require("cors");
+// import cloudinary module
+const cloudinary = require('cloudinary').v2;
+const bodyParser = require("body-parser")
+
+// configure cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET_KEY
+});
 
 const app = express();
 app.use(cors());
+app.use(bodyParser.json()); // for parsing application/json
+app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(express.json());
 
 // connect to mongodb
 mongoose.connect(process.env.MONGO, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -26,7 +39,7 @@ app.get('/', (req, res) => {
 );
 
 // user routers here
-app.use('/crud', routers);
+app.use('/grievance', routers);
 
 // 3. listen to the port
 app.listen(process.env.PORT, () => {

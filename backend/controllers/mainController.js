@@ -1,12 +1,14 @@
-const CrudSchema = require('../schema/crudSchema.js');
+const GrievancesSchema = require('../schema/grievancesSchema.js');
+// import path module
+const path = require('path');
+// import fs module
+const fs = require('fs');
 
 exports.getData = async (req, res) => {
     try {
-        // find all data from database with particular attributes
-        // sort data by date in descending order
 
-        const data = await CrudSchema.find({},{'name':1,'date':1}).sort({date:-1});
-        
+        const data = await GrievancesSchema.find({}).sort({ date: -1 });
+
         res.status(200).send({
             error: false,
             message: "",
@@ -20,8 +22,33 @@ exports.getData = async (req, res) => {
 
 exports.createData = async (req, res) => {
     try {
-        await CrudSchema.create(req.body);
-        
+
+        const uploadedFiles = req.files;
+
+        var filesData = []
+
+        uploadedFiles.forEach((file) => {
+            const fileExtension = path.extname(file.originalname);
+
+            const newFilename = file.filename + fileExtension;
+            const newPath = path.join(file.destination, newFilename);
+
+            fs.rename(file.path, newPath, (error) => {
+                if (error) {
+                    return res.status(500).send('Internal Server Error');
+                }
+            });
+            filesData.push(newFilename)
+        });
+
+        const grievanceData = await GrievancesSchema.create(req.body);
+
+        // update documents field with photo name in database
+        await GrievancesSchema.updateOne(
+            { _id: grievanceData._id.toString() },
+            { $set: { documents: filesData } }
+        )
+
         res.status(200).send({
             error: false,
             message: "Data added successfully.",
@@ -35,14 +62,52 @@ exports.createData = async (req, res) => {
 
 exports.updateData = async (req, res) => {
     try {
-        await CrudSchema.updateOne(
+        const data = await GrievancesSchema.findById(
             { _id: req.params.id },
-            { $set: req.body, date: Date.now() }
         );
-        
+
+        // Delete file from upload folder
+        const files = data.documents;
+
+        files.forEach((file) => {
+            const filePath = path.join('./upload', file);
+            
+            fs.unlink(filePath, (error) => {
+                if (error) {
+                    return res.status(500).send('Internal Server Error');
+                }
+            });
+        });
+
+        const uploadedFiles = req.files;
+
+        var filesData = []
+
+        uploadedFiles.forEach((file) => {
+            const fileExtension = path.extname(file.originalname);
+
+            const newFilename = file.filename + fileExtension;
+            const newPath = path.join(file.destination, newFilename);
+
+            fs.rename(file.path, newPath, (error) => {
+                if (error) {
+                    return res.status(500).send('Internal Server Error');
+                }
+            });
+            filesData.push(newFilename)
+        });
+
+        await GrievancesSchema.updateOne({ _id: req.params.id }, req.body);
+
+        // update documents field with photo name in database
+        await GrievancesSchema.updateOne(
+            { _id: req.params.id },
+            { documents: filesData }
+        )
+
         res.status(200).send({
             error: false,
-            message: "Data Updated successfully.",
+            message: "Data updated successfully.",
             data: null
         });
     }
@@ -53,10 +118,10 @@ exports.updateData = async (req, res) => {
 
 exports.deleteData = async (req, res) => {
     try {
-        await CrudSchema.deleteOne(
+        await GrievancesSchema.deleteOne(
             { _id: req.params.id }
         );
-        
+
         res.status(200).send({
             error: false,
             message: "Data deleted successfully.",
@@ -70,8 +135,8 @@ exports.deleteData = async (req, res) => {
 
 exports.getDataById = async (req, res) => {
     try {
-        const data = await CrudSchema.findById(req.params.id);
-        
+        const data = await GrievancesSchema.findById(req.params.id);
+
         res.status(200).send({
             error: false,
             message: "",
